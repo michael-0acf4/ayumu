@@ -2,6 +2,8 @@
 name = "ayumu"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "A small, lightweight, user-oriented query language for search forms."
 
 [dependencies]
 nom = "7.1.3"
