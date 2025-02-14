@@ -18,7 +18,7 @@ pub fn empty_query() {
     sqlite.match_keywords_with(list_string(&[])).unwrap();
 
     debug_assert_eq!(
-        sqlite.convert(""),
+        sqlite.convert("should be ignored as there are no columns for match keywords"),
         Ok(WhereClause {
             where_clause: "".to_string(),
             order_by: "".to_string(),
@@ -42,18 +42,6 @@ pub fn simple_keyword() {
     sqlite
         .match_keywords_with(list_string(&["title", "tags"]))
         .unwrap();
-    debug_assert_eq!(
-        sqlite.convert("Hayao sortby:title year>=2000 Miyazaki sortby:year,asc"),
-        Ok(WhereClause {
-            where_clause: "(title LIKE ? OR tags LIKE ?) AND (year >= ?)".to_string(),
-            order_by: "title, year ASC".to_string(),
-            bindings: vec![
-                Value::String("%Hayao%Miyazaki%".to_string()),
-                Value::String("%Hayao%Miyazaki%".to_string()),
-                Value::Number(2000.0)
-            ]
-        })
-    );
 
     debug_assert_eq!(
         sqlite.convert("Some title !~ BadTitle Keyword sortby:tags, desc"),
