@@ -42,7 +42,7 @@ pub enum Term {
         keyword: WithPos<String>,
     },
     Operation {
-        command: WithPos<String>,
+        column: WithPos<String>,
         operator: WithPos<Operator>,
         value: WithPos<Value>,
     },
@@ -70,12 +70,12 @@ impl SaveRepr for Term {
         match self {
             Term::Keyword { keyword } => keyword.value.to_owned(),
             Term::Operation {
-                command,
+                column,
                 operator,
                 value,
             } => format!(
                 "{} {} {}",
-                command.value,
+                column.value,
                 operator.save_repr(),
                 value.save_repr()
             ),

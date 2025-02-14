@@ -13,8 +13,8 @@ use string::parse_string;
 
 use crate::ast::{Operator, Order, Term, Value};
 
-pub mod string;
-pub type Span<'a> = LocatedSpan<&'a str>;
+mod string;
+type Span<'a> = LocatedSpan<&'a str>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WithPos<T> {
@@ -33,7 +33,7 @@ impl<T> WithPos<T> {
     }
 }
 
-pub fn with_position_mut<'a, O>(
+fn with_position_mut<'a, O>(
     mut parser: impl FnMut(Span<'a>) -> IResult<Span, O>,
 ) -> impl FnMut(Span<'a>) -> IResult<Span<'a>, WithPos<O>> {
     move |input: Span<'a>| {
@@ -45,7 +45,7 @@ pub fn with_position_mut<'a, O>(
 }
 
 /// Contiguous string without spaces or any of <>=:~, in between
-pub fn parse_token(input: Span) -> IResult<Span, WithPos<String>> {
+fn parse_token(input: Span) -> IResult<Span, WithPos<String>> {
     map(
         with_position_mut(take_while1(|c: char| {
             !c.is_whitespace() && !"<>=:~,".contains(c)
@@ -54,7 +54,7 @@ pub fn parse_token(input: Span) -> IResult<Span, WithPos<String>> {
     )(input)
 }
 
-pub fn parse_operator(input: Span) -> IResult<Span, WithPos<Operator>> {
+fn parse_operator(input: Span) -> IResult<Span, WithPos<Operator>> {
     let op = alt((
         tag("="),
         tag("!="),
@@ -79,13 +79,13 @@ pub fn parse_operator(input: Span) -> IResult<Span, WithPos<Operator>> {
     })(input)
 }
 
-pub fn parse_float_value(input: Span) -> IResult<Span, WithPos<Value>> {
+fn parse_float_value(input: Span) -> IResult<Span, WithPos<Value>> {
     map(with_position_mut(float), |n| {
         n.transfer(Value::Number(n.value))
     })(input)
 }
 
-pub fn parse_string_value(input: Span) -> IResult<Span, WithPos<Value>> {
+fn parse_string_value(input: Span) -> IResult<Span, WithPos<Value>> {
     let string_expr = map(with_position_mut(parse_string), |s| {
         s.transfer(Value::String(s.value.clone()))
     });
@@ -93,8 +93,8 @@ pub fn parse_string_value(input: Span) -> IResult<Span, WithPos<Value>> {
     alt((string_expr, just_token))(input)
 }
 
-pub fn parse_term(input: Span) -> IResult<Span, Term> {
-    let (next_input, command) = preceded(multispace0, parse_token)(input)?;
+fn parse_term(input: Span) -> IResult<Span, Term> {
+    let (next_input, column) = preceded(multispace0, parse_token)(input)?;
     let (next_input, operator) = preceded(multispace0, parse_operator)(next_input)?;
     let (next_input, value) =
         preceded(multispace0, alt((parse_float_value, parse_string_value)))(next_input)?;
@@ -102,14 +102,14 @@ pub fn parse_term(input: Span) -> IResult<Span, Term> {
     Ok((
         next_input,
         Term::Operation {
-            command,
+            column,
             operator,
             value,
         },
     ))
 }
 
-pub fn parse_sort_by(input: Span) -> IResult<Span, Term> {
+fn parse_sort_by(input: Span) -> IResult<Span, Term> {
     let (next_input, _c) = map_res(preceded(multispace0, parse_token), |c| {
         if c.value.to_lowercase().eq("sortby") {
             Ok(c)

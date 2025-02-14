@@ -4,8 +4,8 @@ A small, lightweight, user-oriented query language for search forms.
 
 ```sql
 -- Search 'Hayao', 'Miyazaki' keywords such that release >= 2000
--- then sort by title then release
-Hayao sortby:title release>=2000 Miyazaki sortby:release,asc
+-- then sort by title then year
+Hayao sortby:title year>=2000 Miyazaki sortby:year,asc
 ```
 
 The syntax is designed to be fast, natural, fault tolerant and easy to write on
@@ -17,18 +17,37 @@ instruction, or a keyword (only if unrecognized as a command).
 > The symbols were picked based on how easy they are to reach on either a PC
 > keyboard or a smartphone.
 
-The idea is to produce a non-string based representation (except values) that
-can be **safely** compiled into a SQL query without having to fear injections.
+For example, one use case is to produce a consistent representation that can be
+stored in a database as user-created filters, and then compiled into a **safe**
+SQL string.
 
-```sql
-SELECT * FROM Movies
-WHERE
-(
-    title LIKE $1
-    OR author LIKE $1
-)
-AND release >= 2000
-ORDER BY title ASC, release DESC
+```rust
+// Sample from tests/sqlite.rs 
+// using SQLiteWhere, which is an example of such compiler
 
--- $1: can be bound to '%Hayao%Miyazaki%'
+// Specify the target columns
+let mut sqlite = SQLiteWhere::new(list_string(&["title", "tags", "year"]), true);
+
+// Specify which column to compare orphan keywords with
+sqlite
+    .match_keywords_with(list_string(&["title", "tags"]))
+    .unwrap();
+
+// The parser is very fault-tolerant, meaning it will  
+// eat up anything and error out rarely. Most errors will be caught at the compiler level  
+// (e.g. bad column name in a well-defined term).
+let output = sqlite.convert("Hayao sortby:title year>=2000 Miyazaki sortby:year,asc");
+
+debug_assert_eq!(
+    output,
+    Ok(WhereClause {
+        where_clause: "(title LIKE ? OR tags LIKE ?) AND (year >= ?)".to_string(),
+        order_by: "title, year ASC".to_string(),
+        bindings: vec![
+            Value::String("%Hayao%Miyazaki%".to_string()),
+            Value::String("%Hayao%Miyazaki%".to_string()),
+            Value::Number(2000.0)
+        ]
+    })
+);
 ```

@@ -21,7 +21,7 @@ pub fn simple() {
     debug_assert_eq!(
         parser::parse_query(r#"  _column1234 !~ "\"Hello\" world" "#),
         Ok(vec![Term::Operation {
-            command: WithPos {
+            column: WithPos {
                 value: "_column1234".to_string(),
                 start: 2,
                 end: 13
