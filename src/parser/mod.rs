@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
-    character::complete::{char, space0},
+    character::complete::{char, multispace0},
     combinator::{map, map_res, opt},
     multi::many0,
     number::streaming::float,
@@ -94,10 +94,10 @@ pub fn parse_string_value(input: Span) -> IResult<Span, WithPos<Value>> {
 }
 
 pub fn parse_term(input: Span) -> IResult<Span, Term> {
-    let (next_input, command) = preceded(space0, parse_token)(input)?;
-    let (next_input, operator) = preceded(space0, parse_operator)(next_input)?;
+    let (next_input, command) = preceded(multispace0, parse_token)(input)?;
+    let (next_input, operator) = preceded(multispace0, parse_operator)(next_input)?;
     let (next_input, value) =
-        preceded(space0, alt((parse_float_value, parse_string_value)))(next_input)?;
+        preceded(multispace0, alt((parse_float_value, parse_string_value)))(next_input)?;
 
     Ok((
         next_input,
@@ -110,18 +110,18 @@ pub fn parse_term(input: Span) -> IResult<Span, Term> {
 }
 
 pub fn parse_sort_by(input: Span) -> IResult<Span, Term> {
-    let (next_input, _c) = map_res(preceded(space0, parse_token), |c| {
+    let (next_input, _c) = map_res(preceded(multispace0, parse_token), |c| {
         if c.value.to_lowercase().eq("sortby") {
             Ok(c)
         } else {
             Err(format!("Not a sortby command: {}", c.value))
         }
     })(input)?;
-    let (next_input, _op) = preceded(space0, char(':'))(next_input)?;
-    let (maybe_order_input, column) = preceded(space0, parse_token)(next_input)?;
+    let (next_input, _op) = preceded(multispace0, char(':'))(next_input)?;
+    let (maybe_order_input, column) = preceded(multispace0, parse_token)(next_input)?;
 
-    let order_parser = preceded(char(','), preceded(space0, parse_token));
-    let (next_input, order) = map(preceded(space0, opt(order_parser)), |asc| match asc {
+    let order_parser = preceded(char(','), preceded(multispace0, parse_token));
+    let (next_input, order) = map(preceded(multispace0, opt(order_parser)), |asc| match asc {
         Some(order) => {
             let lc_value = order.value.to_lowercase();
             if "asc".eq(&lc_value) {
@@ -151,7 +151,7 @@ fn parse_query_with_remainder(input: Span) -> IResult<Span, Vec<Term>> {
         map(parse_token, |t| Term::Keyword { keyword: t }),
     ));
 
-    many0(delimited(space0, term, space0))(input)
+    many0(delimited(multispace0, term, multispace0))(input)
 }
 
 pub fn parse_query(input: &str) -> Result<Vec<Term>, String> {

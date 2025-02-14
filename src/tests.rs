@@ -76,6 +76,22 @@ pub fn query_samples() {
         .map(|ts| ts.save_repr()),
         Ok("Hayao sortby:title title ~ \"%one two%\" release >= 2000 Miyazaki sortby:release,desc".to_string())
     );
+
+    assert_eq!(
+        parser::parse_query(
+            r#"
+            title  ~ "%猫%
+            物語%ep%"
+            sortby : foo
+            stars > 5
+            sortby : tag,asc
+            stars <= 5
+            sortby:stars
+        "#
+        )
+        .map(|ts| ts.save_repr()),
+        Ok("title ~ \"%猫%\\n            物語%ep%\" sortby:foo stars > 5 sortby:tag,asc stars <= 5 sortby:stars".to_string())
+    );
 }
 
 #[test]
