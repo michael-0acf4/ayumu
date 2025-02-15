@@ -57,10 +57,10 @@ pub fn simple_keyword() {
     );
 
     debug_assert_eq!(
-        sqlite.convert("Hayao sortby:title year>=2000 Miyazaki sortby:year,asc"),
+        sqlite.convert("Hayao sortby:title sortby:tags ,rand year>=2000 Miyazaki sortby:year,asc"),
         Ok(WhereClause {
             where_clause: "(title LIKE ? OR tags LIKE ?) AND (year >= ?)".to_string(),
-            order_by: "title, year ASC".to_string(),
+            order_by: "title, tags, RANDOM(), year ASC".to_string(),
             bindings: vec![
                 Value::String("%Hayao%Miyazaki%".to_string()),
                 Value::String("%Hayao%Miyazaki%".to_string()),

@@ -1,6 +1,6 @@
 use super::{propose_closest, Convert, ConvertError};
 use crate::{
-    ast::{Operator, SaveRepr, Term, Value},
+    ast::{Operator, Order, SaveRepr, Term, Value},
     parser::WithPos,
 };
 
@@ -105,10 +105,15 @@ impl Convert<WhereClause, String> for SQLiteWhere {
                         false => format!("{:?}", column.value),
                     };
 
-                    let ord_repr = order
-                        .clone()
-                        .map(|o| format!(" {}", o.save_repr().to_uppercase()));
-                    ord_terms.push(format!("{col_repr}{}", ord_repr.unwrap_or("".to_string())));
+                    if let Some(order) = order {
+                        ord_terms.push(match &order.value {
+                            Order::ASC => format!("{col_repr} ASC"),
+                            Order::DESC => format!("{col_repr} DESC"),
+                            Order::RANDOM => format!("{col_repr}, RANDOM()"),
+                        });
+                    } else {
+                        ord_terms.push(col_repr);
+                    }
                 }
             }
         }

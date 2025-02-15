@@ -128,6 +128,8 @@ fn parse_sort_by(input: Span) -> IResult<Span, Term> {
                 Some(order.transfer(Order::ASC))
             } else if "desc".eq(&lc_value) {
                 Some(order.transfer(Order::DESC))
+            } else if "rand".eq(&lc_value) {
+                Some(order.transfer(Order::RANDOM))
             } else {
                 None
             }

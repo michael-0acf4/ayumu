@@ -4,6 +4,7 @@ use crate::parser::WithPos;
 pub enum Order {
     ASC,
     DESC,
+    RANDOM,
 }
 
 #[derive(Debug, Clone)]
@@ -121,6 +122,7 @@ impl SaveRepr for Order {
         match self {
             Order::ASC => "asc".to_string(),
             Order::DESC => "desc".to_string(),
+            Order::RANDOM => "rand".to_string(),
         }
     }
 }
