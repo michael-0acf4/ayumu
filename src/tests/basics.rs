@@ -48,8 +48,13 @@ pub fn simple_repr() {
     );
 
     assert_eq!(
+        parser::parse_query(r#" stars >= 5"#).map(|v| v.save_repr()),
+        Ok("stars >= 5".to_string())
+    );
+
+    assert_eq!(
         parser::parse_query(
-            r#" hello 
+            r#" hello
         world ,, one two"#
         )
         .map(|ts| ts.save_repr()),

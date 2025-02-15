@@ -1,10 +1,10 @@
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_while1},
+    bytes::complete::{tag, take_till1},
     character::complete::{char, multispace0},
     combinator::{map, map_res, opt},
     multi::many0,
-    number::streaming::float,
+    number::complete::float,
     sequence::{delimited, preceded},
     IResult,
 };
@@ -47,8 +47,8 @@ fn with_position_mut<'a, O>(
 /// Contiguous string without spaces or any of <>=:~, in between
 fn parse_token(input: Span) -> IResult<Span, WithPos<String>> {
     map(
-        with_position_mut(take_while1(|c: char| {
-            !c.is_whitespace() && !"<>=:~,".contains(c)
+        with_position_mut(take_till1(|c: char| {
+            c.is_whitespace() || "<>=:~,".contains(c)
         })),
         |s| s.transfer(s.value.to_string()),
     )(input)
@@ -56,13 +56,13 @@ fn parse_token(input: Span) -> IResult<Span, WithPos<String>> {
 
 fn parse_operator(input: Span) -> IResult<Span, WithPos<Operator>> {
     let op = alt((
-        tag("="),
         tag("!="),
-        tag("~"),
         tag("!~"),
         tag(">="),
-        tag(">"),
         tag("<="),
+        tag("="),
+        tag("~"),
+        tag(">"),
         tag("<"),
     ));
 
@@ -173,4 +173,31 @@ pub fn parse_query(input: &str) -> Result<Vec<Term>, String> {
     }
 
     Ok(terms)
+}
+
+#[test]
+pub fn test_units() {
+    // greedy test with take_till1
+    assert_eq!(
+        parse_token("a ".into()).map(|v| (v.0.to_string(), v.1.value)),
+        Ok((" ".to_string(), "a".to_string()))
+    );
+    assert_eq!(
+        parse_token("abc cd".into()).map(|v| (v.0.to_string(), v.1.value)),
+        Ok((" cd".to_string(), "abc".to_string()))
+    );
+
+    // greedy test with float
+    assert_eq!(
+        parse_float_value("4".into()).map(|v| (v.0.to_string(), v.1.value)),
+        Ok(("".to_string(), Value::Number(4.0)))
+    );
+    assert_eq!(
+        parse_float_value("4 ".into()).map(|v| (v.0.to_string(), v.1.value)),
+        Ok((" ".to_string(), Value::Number(4.0)))
+    );
+    assert_eq!(
+        parse_float_value("04.0 ".into()).map(|v| (v.0.to_string(), v.1.value)),
+        Ok((" ".to_string(), Value::Number(4.0)))
+    );
 }
