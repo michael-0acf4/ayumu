@@ -126,11 +126,13 @@ impl Convert<WhereClause, String> for SQLiteWhere {
                 false => format!("{kcol:?}"),
             };
 
-            keyword_terms.push(format!("{col_repr} LIKE ?"));
-            keyword_bindings.push((
-                kcol.to_string(),
-                Value::String(format!("%{}%", keywords.join("%"))),
-            ));
+            if !keywords.is_empty() {
+                keyword_terms.push(format!("{col_repr} LIKE ?"));
+                keyword_bindings.push((
+                    kcol.to_string(),
+                    Value::String(format!("%{}%", keywords.join("%"))),
+                ));
+            }
         }
 
         // merge keyword + normal terms (bindings order matters)

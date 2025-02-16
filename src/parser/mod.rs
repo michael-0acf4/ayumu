@@ -46,12 +46,15 @@ fn with_position_mut<'a, O>(
 
 /// Contiguous string without spaces or any of <>=:~, in between
 fn parse_token(input: Span) -> IResult<Span, WithPos<String>> {
-    map(
+    let (n, g) = map(
         with_position_mut(take_till1(|c: char| {
             c.is_whitespace() || "<>=:~,".contains(c)
         })),
         |s| s.transfer(s.value.to_string()),
-    )(input)
+    )(input)?;
+
+    println!("==> {:?}", g);
+    Ok((n, g))
 }
 
 fn parse_operator(input: Span) -> IResult<Span, WithPos<Operator>> {

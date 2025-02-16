@@ -63,6 +63,15 @@ pub fn simple_keyword() {
     );
 
     debug_assert_eq!(
+        sqlite.convert(r#" title ~"nar"  "#),
+        Ok(WhereClause {
+            where_clause: "(title LIKE ?)".to_string(),
+            order_by: "".to_string(),
+            bindings: vec![("title".to_string(), Value::String("nar".to_string()))]
+        })
+    );
+
+    debug_assert_eq!(
         sqlite.convert("Hayao sortby:title sortby:tags rand year>=2000 Miyazaki sortby:year asc"),
         Ok(WhereClause {
             where_clause: "(title LIKE ? OR tags LIKE ?) AND (year >= ?)".to_string(),
