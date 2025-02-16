@@ -17,6 +17,34 @@ instruction, or a keyword (only if unrecognized as a command).
 > The symbols were picked based on how easy they are to reach on either a PC
 > keyboard or a smartphone.
 
+## Parsing example
+
+```rust
+let terms: Vec<Term> = ayumu::parser::parse_query(
+    r#"
+        Keyword1 sortby:  column desc Keyword2 title > 4
+        sortby : another_column Keyword3
+    "#)
+    .unwrap();
+
+// Terms: "Keyword1", "sortby:column desc", "Keyword2", "title > 4", "sortby:another_column", "Keyword3"
+println!(
+    "Terms: {}",
+    terms
+        .iter()
+        .map(|term| { format!("{:?}", term.save_repr()) })
+        .collect::<Vec<_>>()
+        .join(", ")
+);
+
+
+let compact = terms.save_repr();
+// Keyword1 sortby:column desc Keyword2 title > 4 sortby:another_column Keyword3
+println!("{compact}");
+```
+
+## Compiling to SQL
+
 For example, one use case is to produce a consistent representation that can be
 stored in a database as user-created filters, and then compiled into a **safe**
 SQL string.
