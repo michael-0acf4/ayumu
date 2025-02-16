@@ -15,7 +15,7 @@ pub struct SQLiteWhere {
 pub struct WhereClause {
     pub where_clause: String,
     pub order_by: String,
-    pub bindings: Vec<Value>,
+    pub bindings: Vec<(String, Value)>,
 }
 
 impl SQLiteWhere {
@@ -72,7 +72,7 @@ impl Convert<WhereClause, String> for SQLiteWhere {
         let mut keywords = vec![];
         let mut normal_terms = vec![];
         let mut ord_terms = vec![];
-        let mut nomral_bindings = vec![];
+        let mut normal_bindings = vec![];
 
         for term in terms {
             match term {
@@ -96,7 +96,7 @@ impl Convert<WhereClause, String> for SQLiteWhere {
                     };
 
                     normal_terms.push(format!("{col_repr} {op_repr} ?"));
-                    nomral_bindings.push(value.value.clone());
+                    normal_bindings.push((column.value.clone(), value.value.clone()));
                 }
                 Term::SortBy { column, order } => {
                     self.check_column(column)?;
@@ -127,7 +127,10 @@ impl Convert<WhereClause, String> for SQLiteWhere {
             };
 
             keyword_terms.push(format!("{col_repr} LIKE ?"));
-            keyword_bindings.push(Value::String(format!("%{}%", keywords.join("%"))));
+            keyword_bindings.push((
+                kcol.to_string(),
+                Value::String(format!("%{}%", keywords.join("%"))),
+            ));
         }
 
         // merge keyword + normal terms (bindings order matters)
@@ -140,7 +143,7 @@ impl Convert<WhereClause, String> for SQLiteWhere {
         }
         if !normal_terms.is_empty() {
             where_clause.push(format!("({})", normal_terms.join(" AND ")));
-            bindings.extend(nomral_bindings);
+            bindings.extend(normal_bindings);
         }
 
         Ok(WhereClause {

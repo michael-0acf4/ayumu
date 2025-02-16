@@ -85,7 +85,7 @@ impl SaveRepr for Term {
                 column.value,
                 order
                     .clone()
-                    .map(|o| format!(",{}", o.save_repr()))
+                    .map(|o| format!(" {}", o.save_repr()))
                     .unwrap_or("".to_string())
             ),
         }

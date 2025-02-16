@@ -120,7 +120,7 @@ fn parse_sort_by(input: Span) -> IResult<Span, Term> {
     let (next_input, _op) = preceded(multispace0, char(':'))(next_input)?;
     let (maybe_order_input, column) = preceded(multispace0, parse_token)(next_input)?;
 
-    let order_parser = preceded(char(','), preceded(multispace0, parse_token));
+    let order_parser = preceded(multispace0, parse_token);
     let (next_input, order) = map(preceded(multispace0, opt(order_parser)), |asc| match asc {
         Some(order) => {
             let lc_value = order.value.to_lowercase();
@@ -157,17 +157,17 @@ fn parse_query_with_remainder(input: Span) -> IResult<Span, Vec<Term>> {
 }
 
 pub fn parse_query(input: &str) -> Result<Vec<Term>, String> {
-    let (loc_reminder, mut terms) =
+    let (loc_remainder, mut terms) =
         parse_query_with_remainder(input.into()).map_err(|e| e.to_string())?;
 
-    let reminder = loc_reminder.trim();
-    if !reminder.is_empty() {
-        let start = loc_reminder.location_offset();
+    let remainder = loc_remainder.trim();
+    if !remainder.is_empty() {
+        let start = loc_remainder.location_offset();
         terms.push(Term::Keyword {
             keyword: WithPos {
-                value: reminder.to_owned(),
+                value: remainder.to_owned(),
                 start,
-                end: start + reminder.len(),
+                end: start + remainder.len(),
             },
         });
     }

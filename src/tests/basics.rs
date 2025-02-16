@@ -76,10 +76,10 @@ pub fn query_samples() {
 
     assert_eq!(
         parser::parse_query(
-            r#"Hayao sortby:title title ~ "%one two%" release >= 2000  Miyazaki sortby: release  , desc"#
+            r#"Hayao sortby:title title ~ "%one two%" release >= 2000  Miyazaki sortby: release   desc"#
         )
         .map(|ts| ts.save_repr()),
-        Ok("Hayao sortby:title title ~ \"%one two%\" release >= 2000 Miyazaki sortby:release,desc".to_string())
+        Ok("Hayao sortby:title title ~ \"%one two%\" release >= 2000 Miyazaki sortby:release desc".to_string())
     );
 
     assert_eq!(
@@ -89,21 +89,21 @@ pub fn query_samples() {
             物語%ep%"
             sortby : foo
             stars > 5
-            sortby : tag,asc
+            sortby : tag asc
             stars <= 5
             sortby:stars
         "#
         )
         .map(|ts| ts.save_repr()),
-        Ok("title ~ \"%猫%\\n            物語%ep%\" sortby:foo stars > 5 sortby:tag,asc stars <= 5 sortby:stars".to_string())
+        Ok("title ~ \"%猫%\\n            物語%ep%\" sortby:foo stars > 5 sortby:tag asc stars <= 5 sortby:stars".to_string())
     );
 }
 
 #[test]
 pub fn sortby_expansion() {
     assert_eq!(
-        parser::parse_query(r#" sOrtBy:foo , asc"#).map(|ts| ts.save_repr()),
-        Ok("sortby:foo,asc".to_string())
+        parser::parse_query(r#" sOrtBy:foo  asc"#).map(|ts| ts.save_repr()),
+        Ok("sortby:foo asc".to_string())
     );
     assert_eq!(
         parser::parse_query(r#" sOrtBy : foo , keyword"#).map(|ts| ts.save_repr()),

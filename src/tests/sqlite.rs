@@ -27,7 +27,7 @@ pub fn empty_query() {
     );
 
     debug_assert_eq!(
-        sqlite.convert("sortby : year , desc sortby :tags"),
+        sqlite.convert("sortby : year  desc sortby :tags"),
         Ok(WhereClause {
             where_clause: "".to_string(),
             order_by: "year DESC, tags".to_string(),
@@ -44,27 +44,39 @@ pub fn simple_keyword() {
         .unwrap();
 
     debug_assert_eq!(
-        sqlite.convert("Some title !~ BadTitle Keyword sortby:tags, desc"),
+        sqlite.convert("Some title !~ BadTitle Keyword sortby:tags desc"),
         Ok(WhereClause {
             where_clause: "(title LIKE ? OR tags LIKE ?) AND (title NOT LIKE ?)".to_string(),
             order_by: "tags DESC".to_string(),
             bindings: vec![
-                Value::String("%Some%Keyword%".to_string()),
-                Value::String("%Some%Keyword%".to_string()),
-                Value::String("BadTitle".to_string())
+                (
+                    "title".to_string(),
+                    Value::String("%Some%Keyword%".to_string())
+                ),
+                (
+                    "tags".to_string(),
+                    Value::String("%Some%Keyword%".to_string())
+                ),
+                ("title".to_string(), Value::String("BadTitle".to_string())),
             ]
         })
     );
 
     debug_assert_eq!(
-        sqlite.convert("Hayao sortby:title sortby:tags ,rand year>=2000 Miyazaki sortby:year,asc"),
+        sqlite.convert("Hayao sortby:title sortby:tags rand year>=2000 Miyazaki sortby:year asc"),
         Ok(WhereClause {
             where_clause: "(title LIKE ? OR tags LIKE ?) AND (year >= ?)".to_string(),
             order_by: "title, tags, RANDOM(), year ASC".to_string(),
             bindings: vec![
-                Value::String("%Hayao%Miyazaki%".to_string()),
-                Value::String("%Hayao%Miyazaki%".to_string()),
-                Value::Number(2000.0)
+                (
+                    "title".to_string(),
+                    Value::String("%Hayao%Miyazaki%".to_string())
+                ),
+                (
+                    "tags".to_string(),
+                    Value::String("%Hayao%Miyazaki%".to_string())
+                ),
+                ("year".to_string(), Value::Number(2000.0))
             ]
         })
     );
