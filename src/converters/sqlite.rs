@@ -89,30 +89,63 @@ impl Convert<WhereClause, String> for SQLiteWhere {
                         true => column.value.clone(),
                         false => format!("{:?}", column.value),
                     };
-                    let op_repr = match operator.value {
-                        Operator::Contains => "LIKE".to_string(),
-                        Operator::NotContains => "NOT LIKE".to_string(),
-                        _ => operator.save_repr(),
+                    let is_null_cp = if let Value::String(val) = &value.value {
+                        val.eq("@null")
+                    } else {
+                        false
                     };
+
+                    let op_repr = if is_null_cp {
+                        match &operator.value {
+                            Operator::Eq => "IS".to_string(),
+                            Operator::Neq => "IS NOT".to_string(),
+                            _ => {
+                                return Err(ConvertError {
+                                    error: format!(
+                                        "null comparison expects = or !=, got {:?} instead",
+                                        &operator.value.save_repr()
+                                    ),
+                                    start: operator.start,
+                                    end: operator.end,
+                                })
+                            }
+                        }
+                    } else {
+                        match &operator.value {
+                            Operator::Contains => "LIKE".to_string(),
+                            Operator::NotContains => "NOT LIKE".to_string(),
+                            other => other.save_repr(),
+                        }
+                    }
+                    .to_string();
+
+                    if is_null_cp {
+                        normal_terms.push(format!("{col_repr} {op_repr} NULL"));
+                        continue;
+                    }
 
                     normal_terms.push(format!("{col_repr} {op_repr} ?"));
                     normal_bindings.push((column.value.clone(), value.value.clone()));
                 }
                 Term::SortBy { column, order } => {
-                    self.check_column(column)?;
-                    let col_repr = match self.ignore_case {
-                        true => column.value.clone(),
-                        false => format!("{:?}", column.value),
-                    };
-
-                    if let Some(order) = order {
-                        ord_terms.push(match &order.value {
-                            Order::ASC => format!("{col_repr} ASC"),
-                            Order::DESC => format!("{col_repr} DESC"),
-                            Order::RANDOM => format!("{col_repr}, RANDOM()"),
-                        });
+                    if column.value.eq("@rand") {
+                        ord_terms.push("RANDOM()".to_string());
                     } else {
-                        ord_terms.push(col_repr);
+                        self.check_column(column)?;
+                        let col_repr = match self.ignore_case {
+                            true => column.value.clone(),
+                            false => format!("{:?}", column.value),
+                        };
+
+                        if let Some(order) = order {
+                            ord_terms.push(match &order.value {
+                                Order::ASC => format!("{col_repr} ASC"),
+                                Order::DESC => format!("{col_repr} DESC"),
+                                Order::RANDOM => format!("{col_repr}, RANDOM()"),
+                            });
+                        } else {
+                            ord_terms.push(col_repr);
+                        }
                     }
                 }
             }

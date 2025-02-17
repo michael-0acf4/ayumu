@@ -2,7 +2,7 @@ use crate::{
     ast::Value,
     converters::{
         sqlite::{SQLiteWhere, WhereClause},
-        Convert,
+        Convert, ConvertError,
     },
     tests::list_string,
 };
@@ -87,6 +87,32 @@ pub fn simple_keyword() {
                 ),
                 ("year".to_string(), Value::Number(2000.0))
             ]
+        })
+    );
+}
+
+#[test]
+fn special_values() {
+    let mut sqlite = SQLiteWhere::new(list_string(&["title", "tags", "year"]), true);
+    sqlite
+        .match_keywords_with(list_string(&["title", "tags"]))
+        .unwrap();
+
+    debug_assert_eq!(
+        sqlite.convert("title ~ @null"),
+        Err(ConvertError {
+            error: "null comparison expects = or !=, got \"~\" instead".to_string(),
+            start: 6,
+            end: 7
+        })
+    );
+
+    debug_assert_eq!(
+        sqlite.convert("title = @null tags != @null sortby: @rand asc sortby: title"),
+        Ok(WhereClause {
+            where_clause: "(title IS NULL AND tags IS NOT NULL)".to_string(),
+            order_by: "RANDOM(), title".to_string(),
+            bindings: vec![]
         })
     );
 }
