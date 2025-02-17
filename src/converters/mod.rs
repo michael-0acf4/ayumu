@@ -33,6 +33,7 @@ fn propose_closest(items: &[String], name: &str, dist: Option<usize>) -> Option<
         let edit_dist = strsim::levenshtein(&entry, name);
         if edit_dist <= dist {
             top = Some(entry.to_owned());
+            break;
         }
     }
 

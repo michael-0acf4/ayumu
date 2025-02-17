@@ -64,7 +64,7 @@ sqlite
 // The parser is very fault-tolerant, meaning it will  
 // eat up anything and error out rarely. Most errors will be caught at the compiler level  
 // (e.g. bad column name in a well-defined term).
-let output = sqlite.convert("Hayao sortby:title year>=2000 Miyazaki sortby:year asc");
+let output = sqlite.convert("Hayao sortby:title sortby:tags rand year>=2000 Miyazaki sortby:year asc");
 
 debug_assert_eq!(
     output,
