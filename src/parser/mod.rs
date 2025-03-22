@@ -34,7 +34,7 @@ impl<T> WithPos<T> {
 }
 
 fn with_position_mut<'a, O>(
-    mut parser: impl FnMut(Span<'a>) -> IResult<Span, O>,
+    mut parser: impl FnMut(Span<'a>) -> IResult<Span<'a>, O>,
 ) -> impl FnMut(Span<'a>) -> IResult<Span<'a>, WithPos<O>> {
     move |input: Span<'a>| {
         let start = input.location_offset();
